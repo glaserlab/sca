@@ -23,4 +23,4 @@ pip install git+https://github.com/Lezcano/geotorch/
 ```
 
 ## Getting started
-Please see the example jupyter notebook: **`Example_1pop.ipynb`**
+Please see the example jupyter notebook in the notebooks folder: **`Example_1pop.ipynb`**
