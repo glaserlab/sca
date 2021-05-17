@@ -13,7 +13,7 @@ import torch.nn as nn
 
 import geotorch
 
-
+from ssa.util import torchify
 
 ############ Functions for initialization
 
