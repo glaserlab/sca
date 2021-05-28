@@ -126,10 +126,10 @@ class LowROrth(nn.Module):
         self.output_size = output_size
         self.hidden_size  = hidden_size
         self.fc1 = nn.Linear(self.input_size, self.hidden_size, bias=True)
-        self.fc1.weight = torch.nn.Parameter(torch.FloatTensor(U_init)) #Initialize U
-        self.fc1.bias = torch.nn.Parameter(torch.FloatTensor(-U_init@b_init)) #Initialize first layer bias
+        self.fc1.weight = torch.nn.Parameter(torch.tensor(U_init, dtype=torch.float)) #Initialize U
+        self.fc1.bias = torch.nn.Parameter(torch.tensor(-U_init@b_init, dtype=torch.float)) #Initialize first layer bias
         self.fc2 = nn.Linear(self.hidden_size, self.output_size)
-        self.fc2.bias  = torch.nn.Parameter(torch.FloatTensor(b_init)) #Initialize b
+        self.fc2.bias  = torch.nn.Parameter(torch.tensor(b_init, dtype=torch.float)) #Initialize b
         geotorch.orthogonal(self.fc2,"weight") #Make V orthogonal
 
     def forward(self, x):
@@ -245,7 +245,7 @@ def fit_ssa(X,Y=None,R=None,sample_weight=None,lam=.01,lr=0.001,n_epochs=3000,ve
     optimizer = torch.optim.Adam(model.parameters(), lr = lr)
 
     #Initialize V in the model
-    model.fc2.weight = torch.FloatTensor(V_est.T)
+    model.fc2.weight = torch.tensor(V_est.T, dtype=torch.float)
 
     #Create torch tensors of our variables
     [X_torch,Y_torch,sample_weight_torch] = torchify([X,Y,sample_weight])

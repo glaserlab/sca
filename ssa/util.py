@@ -51,4 +51,4 @@ def torchify(array_list):
 
     """
 
-    return [torch.FloatTensor(array_entry) for array_entry in array_list]
+    return [torch.tensor(array_entry, dtype=torch.float) for array_entry in array_list]
