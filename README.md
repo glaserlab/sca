@@ -23,4 +23,7 @@ pip install git+https://github.com/Lezcano/geotorch/
 ```
 
 ## Getting started
-Please see the example jupyter notebook in the notebooks folder: **`Example_1pop.ipynb`**
+Please see the example jupyter notebooks in the notebooks folder: <br>
+**`Example_1pop.ipynb`** is dimensionality reduction for a single population (like PCA) <br>
+**`Example_2pops.ipynb`** is dimensionality reduction in a regression between two populations (like reduced rank regression)
+
