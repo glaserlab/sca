@@ -83,8 +83,8 @@ def weighted_rrr(X,Y,R,sample_weight=1,ridge=.1):
     beta0=lr.coef_.T
     b_est=lr.intercept_
     svd_comp , __ = weighted_pca(X@beta0,R,sample_weight)
-    beta=beta0@svd_comp.T@svd_comp
-    return beta, beta@svd_comp.T, svd_comp, b_est
+    beta=beta0@svd_comp@svd_comp.T
+    return beta, beta@svd_comp, svd_comp.T, b_est
 
 
 
@@ -127,7 +127,8 @@ class LowROrth(nn.Module):
         self.hidden_size  = hidden_size
         self.fc1 = nn.Linear(self.input_size, self.hidden_size, bias=True)
         self.fc1.weight = torch.nn.Parameter(torch.tensor(U_init, dtype=torch.float)) #Initialize U
-        self.fc1.bias = torch.nn.Parameter(torch.tensor(-U_init@b_init, dtype=torch.float)) #Initialize first layer bias
+        if input_size==output_size:
+            self.fc1.bias = torch.nn.Parameter(torch.tensor(-U_init@b_init, dtype=torch.float)) #Initialize first layer bias
         self.fc2 = nn.Linear(self.hidden_size, self.output_size)
         self.fc2.bias  = torch.nn.Parameter(torch.tensor(b_init, dtype=torch.float)) #Initialize b
         geotorch.orthogonal(self.fc2,"weight") #Make V orthogonal
