@@ -10,6 +10,7 @@ from sklearn.decomposition import TruncatedSVD
 
 import torch
 import torch.nn as nn
+from torch.optim.lr_scheduler import ReduceLROnPlateau
 
 import geotorch
 
@@ -181,7 +182,7 @@ def my_loss(output, target, latent, lam, sample_weight):
     return loss
 
 
-def fit_ssa(X,Y=None,R=None,sample_weight=None,lam=.01,lr=0.001,n_epochs=3000,verbose=True):
+def fit_ssa(X,Y=None,R=None,sample_weight=None,lam=.01,lr=0.001,n_epochs=3000,verbose=True, scheduler_params_input=dict()):
 
     """
     Wrapper function for fitting the SSA model
@@ -230,6 +231,12 @@ def fit_ssa(X,Y=None,R=None,sample_weight=None,lam=.01,lr=0.001,n_epochs=3000,ve
     if sample_weight is None:
         sample_weight=np.ones([X.shape[0],1])
 
+    #Include input scheduler params
+    scheduler_params={'use_scheduler': True, 'factor': .5, 'min_lr': 5e-4, 'patience': 100, 'threshold':1e-6, 'threshold_mode':'rel'}
+    for key in scheduler_params_input.keys():
+        scheduler_params[key]=scheduler_params_input[key]
+
+
     #Initialize with PCA if we only have X. Otherwise initialize with RRR
     if Y is None:
         b_est=np.zeros(X.shape[1])
@@ -250,6 +257,9 @@ def fit_ssa(X,Y=None,R=None,sample_weight=None,lam=.01,lr=0.001,n_epochs=3000,ve
 
     #Create torch tensors of our variables
     [X_torch,Y_torch,sample_weight_torch] = torchify([X,Y,sample_weight])
+
+    #Use scheduler for optimizer learning rate
+    scheduler = ReduceLROnPlateau(optimizer, patience=scheduler_params['patience'], factor=scheduler_params['factor'], min_lr=scheduler_params['min_lr'], threshold=scheduler_params['threshold'], threshold_mode=scheduler_params['threshold_mode'])
 
     #Get initial model loss before training
     model.eval()
@@ -274,6 +284,8 @@ def fit_ssa(X,Y=None,R=None,sample_weight=None,lam=.01,lr=0.001,n_epochs=3000,ve
         # Backward pass
         loss.backward()
         optimizer.step()
+        if scheduler_params['use_scheduler']:
+            scheduler.step(loss.item())
     print('time',time.time()-t1)
 
     return model,latent,y_pred
