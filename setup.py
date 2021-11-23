@@ -38,5 +38,5 @@ if __name__ == "__main__":
           ],
           platforms='any',
           packages=['ssa'],
-          install_requires=['numpy','scipy','sklearn','torch','geotorch']
+          install_requires=['numpy','scipy','sklearn','matplotlib','geotorch']
           )
