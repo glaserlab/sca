@@ -11,10 +11,14 @@ from sklearn.decomposition import TruncatedSVD
 import torch
 import torch.nn as nn
 from torch.optim.lr_scheduler import ReduceLROnPlateau
+import torch.nn.utils.parametrize as P
+import torch.nn.functional as F
 
 import geotorch
 
 from ssa.util import torchify
+
+from tqdm import tqdm
 
 ############ Functions for initialization
 
@@ -154,7 +158,78 @@ class LowROrth(nn.Module):
         return hidden, output
 
 
-def my_loss(output, target, latent, lam, sample_weight):
+
+class Sphere(nn.Module):
+    def __init__(self, dim=-1):
+        super().__init__()
+        self.dim = dim
+    def forward(self, x):
+        return x / x.norm(dim=self.dim, keepdim=True)
+    def right_inverse(self, x):
+        return x / x.norm(dim=self.dim, keepdim=True)
+
+class LowRNorm(nn.Module):
+    """
+    Class for SSA (with unit norm, but not orthogonal) model in pytorch
+    """
+
+    def __init__(self, input_size, output_size, hidden_size, U_init, b_init):
+
+        """
+        Function that declares the model
+
+        Parameters
+        ----------
+        input_size: number of input neurons
+            scalar
+        output_size: number of output neurons
+            scalar
+        hidden_size: number of dimensions in low-D representation
+            scalar
+        U_init: initialization for U parameter
+            torch 2d tensor of size [hidden_size,input_size] (note this is the transpose of how I've been defining U)
+        b_init: initialization for b parameter
+            torch 1d tensor of size [output_size]
+        """
+
+
+        super(LowRNorm, self).__init__()
+        self.input_size = input_size
+        self.output_size = output_size
+        self.hidden_size  = hidden_size
+        self.fc1 = nn.Linear(self.input_size, self.hidden_size, bias=True)
+        self.fc1.weight = torch.nn.Parameter(torch.tensor(U_init, dtype=torch.float)) #Initialize U
+        if input_size==output_size:
+            self.fc1.bias = torch.nn.Parameter(torch.tensor(-U_init@b_init, dtype=torch.float)) #Initialize first layer bias
+
+        self.fc2 = P.register_parametrization(nn.Linear(self.hidden_size, self.output_size), "weight", Sphere(dim=0))
+        self.fc2.bias  = torch.nn.Parameter(torch.tensor(b_init, dtype=torch.float)) #Initialize b
+
+
+    def forward(self, x):
+        """
+        Function that makes predictions in the model
+
+        Parameters
+        ----------
+        x: input data
+            2d torch tensor of shape [n_time,input_size]
+
+        Returns
+        -------
+        hidden: the low-dimensional representations, of size [n_time, hidden_size]
+        output: the predictions, of size [n_time, output_size]
+        """
+
+        hidden = self.fc1(x)
+        output = self.fc2(hidden)
+        return hidden, output
+
+
+
+
+
+def my_loss(output, target, latent, lam_sparse, sample_weight):
 
     """
     Loss function
@@ -167,7 +242,7 @@ def my_loss(output, target, latent, lam, sample_weight):
         torch 2d tensor of size [n_time, output_size]
     latent: low dimensional representations
         torch 2d tensor of size [n_time, hidden_size]
-    lam: sparsity penalty weight
+    lam_sparse: sparsity penalty weight
         scalar
     sample_weight: weighting of each sample
         torch 2d tensor of size [n_time, 1]
@@ -178,11 +253,42 @@ def my_loss(output, target, latent, lam, sample_weight):
     loss: the value of the cost function, a scalar
     """
 
-    loss = torch.sum((sample_weight*(output - target))**2) + lam*torch.sum(torch.abs(latent))
+    loss = torch.sum((sample_weight*(output - target))**2) + lam_sparse*torch.sum(torch.abs(latent))
     return loss
 
 
-def fit_ssa(X,Y=None,R=None,sample_weight=None,lam=.01,lr=0.001,n_epochs=3000,verbose=True, scheduler_params_input=dict()):
+
+def my_loss_norm(output, target, latent, V, lam_sparse, lam_orthog, sample_weight):
+
+    """
+    Loss function when using orthogonality penalty instead of constraint
+
+    Parameters
+    ----------
+    output: the predictions
+        torch 2d tensor of size [n_time, output_size]
+    target: ground truth output
+        torch 2d tensor of size [n_time, output_size]
+    latent: low dimensional representations
+        torch 2d tensor of size [n_time, hidden_size]
+    lam_sparse: sparsity penalty weight
+        scalar
+    lam_orthog: orthogonality regularization weight
+        scalar
+    sample_weight: weighting of each sample
+        torch 2d tensor of size [n_time, 1]
+
+
+    Returns
+    -------
+    loss: the value of the cost function, a scalar
+    """
+
+    loss = torch.sum((sample_weight*(output - target))**2) + lam_sparse*torch.sum(torch.abs(latent)) + lam_orthog*torch.norm(V.T@V-torch.eye(V.shape[1]))**2
+    return loss
+
+
+def fit_ssa(X,Y=None,R=None,sample_weight=None,lam_sparse=None,lr=0.001,n_epochs=3000,orth=True,lam_orthog=None,scheduler_params_input=dict()):
 
     """
     Wrapper function for fitting the SSA model
@@ -199,19 +305,21 @@ def fit_ssa(X,Y=None,R=None,sample_weight=None,lam=.01,lr=0.001,n_epochs=3000,ve
     sample_weight: weighting of each sample (optional)
         numpy 2d array of size [n_time, 1]
         If this argument is not used, will default to no weighting
-    lam: sparsity penalty weight (optional)
+    lam_sparse: sparsity penalty weight (optional)
         scalar
-        Will default to 0.01
+        Will default so that the initial sparsity penalty (based on PCA or RRR initialization) is 10% of the reconstruction error
     lr: learning rate (optional)
         scalar
         Will default to 0.001
     n_epochs: number of training epochs (optional)
         scalar
         Will default to 3000
-    verbose: whether to print ongoing optimization metrics (optional)
+    orth: whether to constrain the V matrix to be orthogonal (optional)
         boolean
         Default is True
-
+    lam_orthog: penalty weight for V matrix deviating from orthogonality, to be used if orth=False
+        scalar
+        Will default so that the orthogonality penalty would be 10% of the PCA/RRR squared error if all off-diag values of V.T@V were 0.1
 
     Returns
     -------
@@ -221,6 +329,7 @@ def fit_ssa(X,Y=None,R=None,sample_weight=None,lam=.01,lr=0.001,n_epochs=3000,ve
     y_pred: the output predictions
         2d torch tensor of size [n_time, n_output_neurons]
     """
+
 
 
     #Require the dimensionality
@@ -244,12 +353,42 @@ def fit_ssa(X,Y=None,R=None,sample_weight=None,lam=.01,lr=0.001,n_epochs=3000,ve
     else:
         __,U_est,V_est, b_est = weighted_rrr(X,Y,R,sample_weight)
 
+    #Set default lam_sparse:
+    #It is set so that the initial sparsity penalty (based on PCA or RRR initialization) is 10% of the reconstruction error
+    if lam_sparse is None:
+        if Y is None:
+            pca_latent = X@U_est
+            pca_recon=pca_latent@V_est
+            lam_sparse = .1*np.sum((X-pca_recon)**2)/np.sum(np.abs(pca_latent))
+            print('Using lam_sparse= ', lam_sparse)
+        else:
+            rrr_latent = X@U_est
+            rrr_recon=rrr_latent@V_est
+            lam_sparse = .1*np.sum((Y-rrr_recon)**2)/np.sum(np.abs(rrr_latent))
+            print('Using lam_sparse= ', lam_sparse)
+
+    #Set default lam_orthog:
+    #It is set so that the orthogonality penalty would be 10% of the PCA/RRR squared error if all off-diag values of V.T@V were 0.1
+    if orth is False:
+        if lam_orthog is None:
+            if Y is None:
+                pca_recon=X@U_est@V_est
+                lam_orthog = .1*np.sum((X-pca_recon)**2)/np.sum(R*(R-1)*.01)
+                print('Using lam_orthog= ', lam_orthog)
+            else:
+                rrr_recon=X@U_est@V_est
+                lam_orthog = .1*np.sum((Y-rrr_recon)**2)/np.sum(R*(R-1)*.01)
+                print('Using lam_orthog= ', lam_orthog)
+
     #To make the rest generic, we will predict Y from X, where Y=X in the scenario that Y has not been input
     if Y is None:
         Y=X
 
     #Declare the model and optimizer
-    model = LowROrth(X.shape[1], Y.shape[1], R, U_est.T, b_est)
+    if orth:
+        model = LowROrth(X.shape[1], Y.shape[1], R, U_est.T, b_est)
+    else:
+        model = LowRNorm(X.shape[1], Y.shape[1], R, U_est.T, b_est)
     optimizer = torch.optim.Adam(model.parameters(), lr = lr)
 
     #Initialize V in the model
@@ -258,34 +397,40 @@ def fit_ssa(X,Y=None,R=None,sample_weight=None,lam=.01,lr=0.001,n_epochs=3000,ve
     #Create torch tensors of our variables
     [X_torch,Y_torch,sample_weight_torch] = torchify([X,Y,sample_weight])
 
-    #Use scheduler for optimizer learning rate
+    # scheduler = ReduceLROnPlateau(optimizer, patience=100, factor=schedule_factor, min_lr=5e-4, threshold=1e-6)
     scheduler = ReduceLROnPlateau(optimizer, patience=scheduler_params['patience'], factor=scheduler_params['factor'], min_lr=scheduler_params['min_lr'], threshold=scheduler_params['threshold'], threshold_mode=scheduler_params['threshold_mode'])
 
     #Get initial model loss before training
     model.eval()
     latent, y_pred = model(X_torch)
-    before_train = my_loss(y_pred, Y_torch, latent, lam, sample_weight_torch)
-    if verbose:
-        print('Training loss before training' , before_train.item())
+    if orth:
+        before_train = my_loss(y_pred, Y_torch, latent, lam_sparse, sample_weight_torch)
+    else:
+        before_train = my_loss_norm(y_pred, Y_torch, latent, model.fc2.weight, lam_sparse, lam_orthog, sample_weight_torch)
 
     #Fit the model!
-    t1=time.time()
+
+    # t1=time.time()
+    losses=np.zeros(n_epochs+1) #Save loss at each training epoch
+    losses[0]=before_train.item()
+
     model.train()
-    epoch = n_epochs
-    for epoch in range(epoch):
+    for epoch in tqdm(range(n_epochs), position=0, leave=True):
         optimizer.zero_grad()
         # Forward pass
         latent, y_pred = model(X_torch)
         # Compute Loss
-        loss = my_loss(y_pred, Y_torch, latent, lam, sample_weight_torch)
-        if verbose:
-            if np.mod(epoch,10)==0:
-                print('Epoch {}: train loss: {}'.format(epoch, loss.item()))
+        if orth:
+            loss = my_loss(y_pred, Y_torch, latent, lam_sparse, sample_weight_torch)
+        else:
+            loss = my_loss_norm(y_pred, Y_torch, latent, model.fc2.weight, lam_sparse, lam_orthog, sample_weight_torch)
+        losses[epoch+1]=loss.item()
+
         # Backward pass
         loss.backward()
         optimizer.step()
         if scheduler_params['use_scheduler']:
             scheduler.step(loss.item())
-    print('time',time.time()-t1)
+    # print('time',time.time()-t1)
 
-    return model,latent,y_pred
+    return model,latent,y_pred,losses
