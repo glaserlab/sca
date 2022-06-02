@@ -20,7 +20,7 @@ Let's say we have a matrix **X** that contains the activity of *N* neurons over 
 To do this, we first import the necessary function and then run SSA:
 ```python
 from ssa.models import fit_ssa
-model, latent, x_hat = fit_ssa(X,R)
+model, latent, x_hat, losses = fit_ssa(X,R)
 ```
 where the output "latent" is the low-D representation and "x_hat" is the reconstructed high-D data.
 
