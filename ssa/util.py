@@ -50,5 +50,7 @@ def torchify(array_list):
     a list of torch tensors (corresponding to the original arrays)
 
     """
+    # use GPU if available
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-    return [torch.tensor(array_entry, dtype=torch.float) for array_entry in array_list]
+    return [torch.tensor(array_entry, dtype=torch.float).to(device) for array_entry in array_list]
