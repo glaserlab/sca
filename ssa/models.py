@@ -384,15 +384,19 @@ def fit_ssa(X,Y=None,R=None,sample_weight=None,lam_sparse=None,lr=0.001,n_epochs
     if Y is None:
         Y=X
 
+    # move to GPU if available
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    print("Using device", device)
+
     #Declare the model and optimizer
     if orth:
-        model = LowROrth(X.shape[1], Y.shape[1], R, U_est.T, b_est)
+        model = LowROrth(X.shape[1], Y.shape[1], R, U_est.T, b_est).to(device)
     else:
-        model = LowRNorm(X.shape[1], Y.shape[1], R, U_est.T, b_est)
+        model = LowRNorm(X.shape[1], Y.shape[1], R, U_est.T, b_est).to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr = lr)
 
     #Initialize V in the model
-    model.fc2.weight = torch.tensor(V_est.T, dtype=torch.float)
+    model.fc2.weight = torch.tensor(V_est.T, dtype=torch.float).to(device)
 
     #Create torch tensors of our variables
     [X_torch,Y_torch,sample_weight_torch] = torchify([X,Y,sample_weight])
