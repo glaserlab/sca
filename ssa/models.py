@@ -371,14 +371,16 @@ def fit_ssa(X,Y=None,R=None,sample_weight=None,lam_sparse=None,lr=0.001,n_epochs
     #It is set so that the orthogonality penalty would be 10% of the PCA/RRR squared error if all off-diag values of V.T@V were 0.1
     if orth is False:
         if lam_orthog is None:
-            if Y is None:
-                pca_recon=X@U_est@V_est
-                lam_orthog = .1*np.sum((X-pca_recon)**2)/np.sum(R*(R-1)*.01)
-                print('Using lam_orthog= ', lam_orthog)
+            if R==1:
+                lam_orthog=0
             else:
-                rrr_recon=X@U_est@V_est
-                lam_orthog = .1*np.sum((Y-rrr_recon)**2)/np.sum(R*(R-1)*.01)
-                print('Using lam_orthog= ', lam_orthog)
+                if Y is None:
+                    pca_recon=X@U_est@V_est
+                    lam_orthog = .1*np.sum((X-pca_recon)**2)/np.sum(R*(R-1)*.01)
+                else:
+                    rrr_recon=X@U_est@V_est
+                    lam_orthog = .1*np.sum((Y-rrr_recon)**2)/np.sum(R*(R-1)*.01)
+            print('Using lam_orthog= ', lam_orthog)
 
     #To make the rest generic, we will predict Y from X, where Y=X in the scenario that Y has not been input
     if Y is None:
