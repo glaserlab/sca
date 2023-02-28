@@ -1,6 +1,6 @@
-# SSA: Sparse Subspace Analysis
+# SCA: Sparse Component Analysis
 
-This is an in-development package for "sparse subspace analysis," a dimensionality reduction tool that aims to provide more interpretable low-D representations than PCA.
+This is an in-development package for "sparse component analysis," a dimensionality reduction tool that aims to provide more interpretable low-D representations than PCA. Note that we previously referred to the method as "ssa", and have not yet changed the acronym within the package.
 
 ## Installation and Dependencies
 
