@@ -17,10 +17,10 @@ This package requires python 3.6 or higher for a succesful installation.
 
 Let's say we have a matrix **X** that contains the activity of *N* neurons over *T* time points (it is dimension *T* x *N*). We want to reduce the dimensionality to *R* instead of *N*.
 
-To do this, we first import the necessary function and then run SSA:
+To do this, we first import the necessary function and then run SCA:
 ```python
-from ssa.models import fit_ssa
-model, latent, x_hat, losses = fit_ssa(X,R)
+from sca.models import fit_sca
+model, latent, x_hat, losses = fit_sca(X,R)
 ```
 where the output "latent" is the low-D representation and "x_hat" is the reconstructed high-D data.
 
