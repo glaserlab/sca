@@ -3,14 +3,14 @@ import setuptools  # noqa; we are using a setuptools namespace
 # from numpy.distutils.core import setup
 from setuptools import setup, Extension
 
-descr = """Sparse subspace analysis"""
+descr = """Sparse components analysis"""
 
-DISTNAME = 'ssa'
+DISTNAME = 'sca'
 DESCRIPTION = descr
 MAINTAINER = 'Joshua Glaser'
 MAINTAINER_EMAIL = 'joshglaser88@gmail.com '
 LICENSE = 'BSD 3-Clause License'
-DOWNLOAD_URL = 'https://github.com/jglaser2/ssa.git'
+DOWNLOAD_URL = 'https://github.com/jglaser2/sca.git'
 VERSION = '0.0.0.dev'
 
 
@@ -37,6 +37,6 @@ if __name__ == "__main__":
               'Operating System :: MacOS',
           ],
           platforms='any',
-          packages=['ssa'],
+          packages=['sca'],
           install_requires=['numpy','scipy','sklearn','matplotlib','geotorch','tqdm']
           )

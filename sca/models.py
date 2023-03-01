@@ -16,7 +16,7 @@ import torch.nn.functional as F
 
 import geotorch
 
-from ssa.util import torchify
+from sca.util import torchify
 
 from tqdm import tqdm
 
@@ -39,7 +39,7 @@ def weighted_pca(X,R,sample_weight=1):
     -------
     U, U^T
     U is size [n_neurons, R], and projects the data down into an R-dimensional space
-    U^T projects back up to the high dimensional space, and can be though of like "V" in SSA
+    U^T projects back up to the high dimensional space, and can be though of like "V" in SCA
     """
 
     Xw=X*sample_weight
@@ -71,7 +71,7 @@ def weighted_rrr(X,Y,R,sample_weight=1,ridge=.1):
 
     beta are the weights of the reduced rank regression
     beta can be written as beta = UV, where U is size [n_input_neurons, R] and V is size [R, n_output_neurons]
-    U and V can serve as initializations for SSA (for SSA's U and V variables)
+    U and V can serve as initializations for SCA (for SCA's U and V variables)
     b is the offset of the reduced rank regression
 
     """
@@ -103,7 +103,7 @@ def weighted_rrr(X,Y,R,sample_weight=1,ridge=.1):
 
 class LowROrth(nn.Module):
     """
-    Class for SSA model in pytorch
+    Class for SCA model in pytorch
     """
 
     def __init__(self, input_size, output_size, hidden_size, U_init, b_init):
@@ -170,7 +170,7 @@ class Sphere(nn.Module):
 
 class LowRNorm(nn.Module):
     """
-    Class for SSA (with unit norm, but not orthogonal) model in pytorch
+    Class for SCA (with unit norm, but not orthogonal) model in pytorch
     """
 
     def __init__(self, input_size, output_size, hidden_size, U_init, b_init):
@@ -288,10 +288,10 @@ def my_loss_norm(output, target, latent, V, lam_sparse, lam_orthog, sample_weigh
     return loss
 
 
-def fit_ssa(X,Y=None,R=None,sample_weight=None,lam_sparse=None,lr=0.001,n_epochs=3000,orth=True,lam_orthog=None,scheduler_params_input=dict()):
+def fit_sca(X,Y=None,R=None,sample_weight=None,lam_sparse=None,lr=0.001,n_epochs=3000,orth=True,lam_orthog=None,scheduler_params_input=dict()):
 
     """
-    Wrapper function for fitting the SSA model
+    Wrapper function for fitting the SCA model
 
     Parameters
     ----------
