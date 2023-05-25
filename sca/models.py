@@ -7,6 +7,7 @@ import time
 
 from sklearn.linear_model import LinearRegression, Ridge
 from sklearn.decomposition import TruncatedSVD
+from scipy.linalg import orth as orthog
 
 import torch
 import torch.nn as nn
@@ -288,7 +289,7 @@ def my_loss_norm(output, target, latent, V, lam_sparse, lam_orthog, sample_weigh
     return loss
 
 
-def fit_sca(X,Y=None,R=None,sample_weight=None,lam_sparse=None,lr=0.001,n_epochs=3000,orth=True,lam_orthog=None,scheduler_params_input=dict()):
+def fit_sca(X,Y=None,R=None,sample_weight=None,lam_sparse=None,lr=None,n_epochs=3000,orth=True,lam_orthog=None,init=None,scheduler_params_input=dict()):
 
     """
     Wrapper function for fitting the SCA model
@@ -320,6 +321,10 @@ def fit_sca(X,Y=None,R=None,sample_weight=None,lam_sparse=None,lr=0.001,n_epochs
     lam_orthog: penalty weight for V matrix deviating from orthogonality, to be used if orth=False
         scalar
         Will default so that the orthogonality penalty would be 10% of the PCA/RRR squared error if all off-diag values of V.T@V were 0.1
+    init: initialization scheme (optional)
+        string
+        For single population, can be 'pca' or 'rand', and defaults to 'pca'.
+        For two-population, can be 'rrr' or 'rand', and defaults to 'rrr'
 
     Returns
     -------
@@ -328,6 +333,8 @@ def fit_sca(X,Y=None,R=None,sample_weight=None,lam_sparse=None,lr=0.001,n_epochs
         2d torch tensor of size [n_time, R_est]
     y_pred: the output predictions
         2d torch tensor of size [n_time, n_output_neurons]
+    losses: the model loss for each epoch
+        list of length n_epochs
     """
 
 
@@ -346,24 +353,57 @@ def fit_sca(X,Y=None,R=None,sample_weight=None,lam_sparse=None,lr=0.001,n_epochs
         scheduler_params[key]=scheduler_params_input[key]
 
 
-    #Initialize with PCA if we only have X. Otherwise initialize with RRR
+    #Initialize weights
+    #Default, if we only have X, is initializing with PCA, and if we have Y, initializing with RRR
+    #Initializing randomly is also an option
+
+    #Get weights when initializing with PCA and RRR
     if Y is None:
         b_est=np.zeros(X.shape[1])
-        U_est,V_est = weighted_pca(X,R,sample_weight)
+        U_est_pca,V_est_pca = weighted_pca(X,R,sample_weight)
     else:
-        __,U_est,V_est, b_est = weighted_rrr(X,Y,R,sample_weight)
+        __,U_est_rrr,V_est_rrr, b_est = weighted_rrr(X,Y,R,sample_weight)
+
+    #Initialize weights (either with PCA/RRR weights from above, or randomly)
+    if Y is None:
+        if init is None or init=='pca':
+            U_est=np.copy(U_est_pca)
+            V_est=np.copy(V_est_pca)
+        elif init=='rand':
+            U_est = orthog(npr.randn(X.shape[1],R))
+            V_est=U_est.T
+        else:
+            raise Exception("Invalid initialization: options are 'pca' or 'rand' ")
+    else:
+        if init is None or init=='rrr':
+            U_est=np.copy(U_est_rrr)
+            V_est=np.copy(V_est_rrr)
+        elif init=='rand':
+            U_est = orthog(npr.randn(X.shape[1],R))
+            V_est = npr.randn(R,Y.shape[1])
+        else:
+            raise Exception("Invalid initialization: options are 'rrr' or 'rand' ")
+
+
+    #Set default learning rate:
+    #.001 if initializing weights w/ PCA/RRR and .01 if random weights
+    if lr is None:
+        if init=='rand':
+            lr=.01
+        else:
+            lr=.001
 
     #Set default lam_sparse:
     #It is set so that the initial sparsity penalty (based on PCA or RRR initialization) is 10% of the reconstruction error
     if lam_sparse is None:
         if Y is None:
-            pca_latent = X@U_est
-            pca_recon=pca_latent@V_est
+            pca_latent = X@U_est_pca
+            pca_recon=pca_latent@V_est_pca
             lam_sparse = .1*np.sum((X-pca_recon)**2)/np.sum(np.abs(pca_latent))
             print('Using lam_sparse= ', lam_sparse)
         else:
-            rrr_latent = X@U_est
-            rrr_recon=rrr_latent@V_est
+            rrr_latent = X@U_est_rrr
+            rrr_recon=rrr_latent@V_est_rrr
             lam_sparse = .1*np.sum((Y-rrr_recon)**2)/np.sum(np.abs(rrr_latent))
             print('Using lam_sparse= ', lam_sparse)
 
