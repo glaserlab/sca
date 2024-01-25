@@ -6,6 +6,7 @@ import copy
 import time
 
 import torch
+from sklearn.metrics import r2_score
 
 
 
@@ -54,3 +55,16 @@ def torchify(array_list):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
     return [torch.tensor(array_entry, dtype=torch.float).to(device) for array_entry in array_list]
+
+
+def get_accuracy(self,X,sample_weight=None):
+
+    Xhat = self.reconstruct(X)
+    if sample_weight is None:
+        r2=r2_score(X,Xhat,multioutput='variance_weighted')
+        reconstruction_loss=np.sum(((Xhat - X))**2)
+    else:
+        r2=r2_score(X,Xhat,sample_weight=sample_weight,multioutput='variance_weighted')
+        reconstruction_loss=np.sum((sample_weight*(Xhat - X))**2)
+
+    return [r2,reconstruction_loss]
