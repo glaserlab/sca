@@ -10,8 +10,8 @@ DESCRIPTION = descr
 MAINTAINER = 'Joshua Glaser'
 MAINTAINER_EMAIL = 'joshglaser88@gmail.com '
 LICENSE = 'BSD 3-Clause License'
-DOWNLOAD_URL = 'https://github.com/jglaser2/sca.git'
-VERSION = '0.0.0.dev'
+DOWNLOAD_URL = 'https://github.com/glaserlab/sca.git'
+VERSION = '0.0.1.dev'
 
 
 if __name__ == "__main__":
