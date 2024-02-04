@@ -6,7 +6,7 @@ This is an in-development package for "sparse component analysis," a dimensional
 
 This package can be installed by: 
 ```buildoutcfg
-git clone https://github.com/jglaser2/sca.git
+git clone https://github.com/glaserlab/sca.git
 cd sca
 pip install -e .
 ```
