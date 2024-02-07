@@ -1,6 +1,6 @@
 # SCA: Sparse Component Analysis
 
-This is an in-development package for "sparse component analysis," a dimensionality reduction tool that aims to provide more interpretable low-D representations than PCA. Note that we previously referred to the method as "ssa"
+"Sparse component analysis" is a dimensionality reduction tool that aims to provide more interpretable low-D representations than PCA. Please see our [preprint](https://www.biorxiv.org/content/10.1101/2024.02.05.578988v1) for further details on the method.
 
 ## Installation and Dependencies
 
