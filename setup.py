@@ -38,5 +38,5 @@ if __name__ == "__main__":
           ],
           platforms='any',
           packages=['sca'],
-          install_requires=['numpy','scipy','scikit-learn','matplotlib','geotorch','tqdm']
+          install_requires=['numpy','scipy','scikit-learn','matplotlib','geotorch','tqdm','plotly']
           )
