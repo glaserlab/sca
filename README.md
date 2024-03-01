@@ -1,5 +1,6 @@
 # Sparse Component Analysis: An unsupervised method for recovering interpretable latent factors
-![SCA_overview_v1.pdf](https://github.com/andrewZimnik/SCA_tutorials/files/13934203/SCA_overview_v1.pdf)
+![SCA_overview_v1.pdf](https://github.com/andrewZimnik/sca/files/14455291/SCA_overview_v1.pdf)
+
 # Overview
 Sparse Component Analysis (SCA) is an unsupervised dimensionality reduction method that can recover interpretable latent factors from high dimensional neural activity. This repo. contains notebooks (and example data) that demonstrate how to use SCA. For a full characterization of the method (and to see results from additional datasets) see the [preprint](https://www.biorxiv.org/content/10.1101/2024.02.05.578988v1).
 
