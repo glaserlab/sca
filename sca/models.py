@@ -594,19 +594,19 @@ class SCA(object):
         self.losses=losses
 
         self.params={}
-        self.params['U']=model.fc1.weight.detach().numpy().T
-        self.params['b_u']=model.fc1.bias.detach().numpy()
-        self.params['V']=model.fc2.weight.detach().numpy().T
-        self.params['b_v']=model.fc2.bias.detach().numpy()
+        self.params['U']=model.fc1.weight.detach().cpu().numpy().T
+        self.params['b_u']=model.fc1.bias.detach().cpu().numpy()
+        self.params['V']=model.fc2.weight.detach().cpu().numpy().T
+        self.params['b_v']=model.fc2.bias.detach().cpu().numpy()
 
-        self.r2_score=r2_score(Y,y_pred.detach().numpy(),sample_weight=sample_weight,multioutput='variance_weighted')
-        self.reconstruction_loss=np.sum((sample_weight*(y_pred.detach().numpy() - Y))**2)
+        self.r2_score=r2_score(Y,y_pred.detach().cpu().numpy(),sample_weight=sample_weight,multioutput='variance_weighted')
+        self.reconstruction_loss=np.sum((sample_weight*(y_pred.detach().cpu().numpy() - Y))**2)
 
         #Explained squared activity
-        sq_activity=[np.sum((latent[:,i:i+1].detach().numpy()@model.fc2.weight[:,i:i+1].detach().numpy().T)**2) for i in range(self.n_components)]
+        sq_activity=[np.sum((latent[:,i:i+1].detach().cpu().numpy()@model.fc2.weight[:,i:i+1].detach().cpu().numpy().T)**2) for i in range(self.n_components)]
         self.explained_squared_activity = np.array(sq_activity)
 
-        return latent.detach().numpy()
+        return latent.detach().cpu().numpy()
 
 
 
@@ -658,7 +658,7 @@ class SCA(object):
 
         [X_torch] = torchify([X])
         latent, y_pred = self.model(X_torch)
-        return latent.detach().numpy()
+        return latent.detach().cpu().numpy()
 
 
 
@@ -682,4 +682,4 @@ class SCA(object):
 
         [X_torch] = torchify([X])
         latent, y_pred = self.model(X_torch)
-        return y_pred.detach().numpy()
+        return y_pred.detach().cpu().numpy()
