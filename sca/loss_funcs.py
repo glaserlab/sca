@@ -55,5 +55,5 @@ def my_loss_norm(output, target, latent, V, lam_sparse, lam_orthog, sample_weigh
     loss: the value of the cost function, a scalar
     """
 
-    loss = torch.sum((sample_weight*(output - target))**2) + lam_sparse*torch.sum(torch.abs(latent)) + lam_orthog*torch.norm(V.T@V-torch.eye(V.shape[1]))**2
+    loss = torch.sum((sample_weight*(output - target))**2) + lam_sparse*torch.sum(torch.abs(latent)) + lam_orthog*torch.norm(V.T@V-torch.eye(V.shape[1], device=V.device))**2
     return loss
