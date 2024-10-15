@@ -480,7 +480,7 @@ class SCA(object):
                 U_est=np.copy(U_est_pca)
                 V_est=np.copy(V_est_pca)
             elif self.init=='rand':
-                U_est = orthog(npr.randn(X.shape[1],R))
+                U_est = orthog(npr.randn(X.shape[1],self.n_components))
                 V_est=U_est.T
             else:
                 raise Exception("Invalid initialization: options are 'pca' or 'rand' ")
@@ -489,8 +489,8 @@ class SCA(object):
                 U_est=np.copy(U_est_rrr)
                 V_est=np.copy(V_est_rrr)
             elif self.init=='rand':
-                U_est = orthog(npr.randn(X.shape[1],R))
-                V_est = npr.randn(R,Y.shape[1])
+                U_est = orthog(npr.randn(X.shape[1],self.n_components))
+                V_est = npr.randn(self.n_components,Y.shape[1])
             else:
                 raise Exception("Invalid initialization: options are 'rrr' or 'rand' ")
 
