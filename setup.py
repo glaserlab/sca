@@ -8,10 +8,10 @@ descr = """Sparse components analysis"""
 DISTNAME = 'sca'
 DESCRIPTION = descr
 MAINTAINER = 'Joshua Glaser'
-MAINTAINER_EMAIL = 'joshglaser88@gmail.com '
+MAINTAINER_EMAIL = 'j-glaser@northwestern.edu '
 LICENSE = 'BSD 3-Clause License'
 DOWNLOAD_URL = 'https://github.com/glaserlab/sca.git'
-VERSION = '0.0.1.dev'
+VERSION = '0.0.2.dev'
 
 
 if __name__ == "__main__":
@@ -38,5 +38,5 @@ if __name__ == "__main__":
           ],
           platforms='any',
           packages=['sca'],
-          install_requires=['numpy','scipy','scikit-learn','matplotlib','geotorch','tqdm','plotly']
+          install_requires=['numpy','scipy','scikit-learn','matplotlib','geotorch','tqdm','plotly','factor_analyzer']
           )

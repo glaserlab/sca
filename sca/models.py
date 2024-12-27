@@ -24,11 +24,12 @@ from sca.architectures import LowROrth, LowRNorm
 
 from tqdm import tqdm
 
+from factor_analyzer import Rotator
 
 
 ############ Functions for initialization
 
-class WeightedPCA(object):   ### ADD attributes section at beginning
+class WeightedPCA(object):
 
 
     """
@@ -38,6 +39,9 @@ class WeightedPCA(object):   ### ADD attributes section at beginning
     ----------
     n_components: dimensionality (rank) of PCA projection
         scalar
+    rotate: whether to perform a varimax rotation on the latents after fitting PCA (optional)
+        boolean
+        Default is False
 
 
     Attributes
@@ -52,9 +56,51 @@ class WeightedPCA(object):   ### ADD attributes section at beginning
         numpy 2d array of size [n_components,n_neurons]
     """
 
-    def __init__(self,n_components=None):
+    def __init__(self,n_components=None,rotate=False):
 
          self.n_components = n_components
+         self.rotate = rotate
+
+    def fit_transform(self,X,sample_weight=1):
+
+        """
+        Fit weighted Pca model and then get latents (low-dimensional representation) of data X from fit model
+
+        Parameters
+        ----------
+        X: neural data
+            numpy 2d array of shape [n_time,n_neurons]
+
+        sample_weight: weighting of each sample
+            numpy 2d array of shape [n_time,1]
+
+        Returns
+        -------
+        Latents (low-dimensional representation) of input data
+            numpy 2d array of shape [n_time,n_components]
+        """
+
+
+        Xw=X*sample_weight
+        svd=TruncatedSVD(self.n_components)
+        svd.fit(Xw)
+        self.components_ = svd.components_
+
+        latents=X@self.components_.T
+
+        self.params={}
+        self.params['U']=svd.components_.T
+        self.params['V']=svd.components_
+
+        if self.rotate:
+            rotator = Rotator(method='varimax')
+            latents=rotator.fit_transform(latents)
+            self.params['U']=self.params['U']@rotator.rotation_
+            self.params['V']=rotator.rotation_.T@self.params['V']
+
+
+        return latents
+
 
 
     def fit(self,X,sample_weight=1):
@@ -76,20 +122,9 @@ class WeightedPCA(object):   ### ADD attributes section at beginning
         self : the instance itself
             object
         """
-
-        Xw=X*sample_weight
-        svd=TruncatedSVD(self.n_components)
-        svd.fit(Xw)
-        self.components_ = svd.components_
-
-        self.params={}
-        self.params['U']=svd.components_.T
-        self.params['V']=svd.components_
-
-
+        latent=self.fit_transform(X,sample_weight)
         return self
 
-        # return svd.components_.T, svd.components_
 
     def transform(self,X):
 
@@ -108,29 +143,6 @@ class WeightedPCA(object):   ### ADD attributes section at beginning
         """
 
         return X@self.params['U']
-
-
-    def fit_transform(self,X,sample_weight=1):
-
-        """
-        Fit weighted Pca model and then get latents (low-dimensional representation) of data X from fit model
-
-        Parameters
-        ----------
-        X: neural data
-            numpy 2d array of shape [n_time,n_neurons]
-
-        sample_weight: weighting of each sample
-            numpy 2d array of shape [n_time,1]
-
-        Returns
-        -------
-        Latents (low-dimensional representation) of input data
-            numpy 2d array of shape [n_time,n_components]
-        """
-
-        self.fit(X,sample_weight)
-        return self.transform(X)
 
 
     def reconstruct(self,X):
@@ -156,6 +168,7 @@ class WeightedPCA(object):   ### ADD attributes section at beginning
 
 
 class WeightedRRR(object):  ### DOUBLE CHECK THIS NEW VERSION!!! (that it gives same results as old version)
+    ### NOTE THAT THE VARIMAX ROTATION HAS NOT YET BEEN INCLUDED HERE AS AN OPTION
 
     """
     Class for weighted reduced rank regression
@@ -374,12 +387,12 @@ class SCA(object):
     orth: whether to constrain the V matrix to be strictly orthogonal (optional)
         boolean
         Default is False
-    lam_orthog: penalty weight for V matrix deviating from orthogonality, to be used if orth=False
+    lam_orthog: penalty weight for V matrix deviating from orthogonality, to be used if orth=False  (optional)
         scalar
         Will default in model fitting so that the orthogonality penalty would be 10% of the PCA/RRR squared error if all off-diag values of V.T@V were 0.1
     init: initialization scheme (optional)
         string
-        For single population, can be 'pca' or 'rand', and defaults to 'pca'.
+        For single population, can be 'pca', 'varimax', or 'rand', and defaults to 'pca'.
         For two-population, can be 'rrr' or 'rand', and defaults to 'rrr'
 
 
@@ -390,7 +403,6 @@ class SCA(object):
             list of length n_epochs
         explained_squared_activity: The amount of squared neural activity that each latent explains
             array of length n_components
-
         reconstruction_loss: the reconstruction loss term in the cost function (the weighted sum squared error)
             scalar
         r2_score: the r2 value of the model fit. Neurons are weighted by their amount of variance, and sample-weighting is used
@@ -467,23 +479,28 @@ class SCA(object):
         #Get weights when initializing with PCA and RRR
         if Y is None:
             b_est=np.zeros(X.shape[1])
-            # U_est_pca,V_est_pca = weighted_pca(X,self.n_components,sample_weight)
+
             wpca=WeightedPCA(self.n_components)
             wpca.fit(X,sample_weight)
             U_est_pca,V_est_pca = wpca.params['U'], wpca.params['V']
         else:
             __,U_est_rrr,V_est_rrr, b_est = weighted_rrr(X,Y,self.n_components,sample_weight)
 
-        #Initialize weights (either with PCA/RRR weights from above, or randomly)
+        #Initialize weights (either with PCA/RRR weights from above, or with PCA + varimax rotaation, or randomly)
         if Y is None:
+
             if self.init is None or self.init=='pca':
                 U_est=np.copy(U_est_pca)
                 V_est=np.copy(V_est_pca)
+            elif self.init=='varimax':
+                wpca2=WeightedPCA(self.n_components,rotate=True)
+                wpca2.fit(X,sample_weight)
+                U_est,V_est = wpca2.params['U'], wpca2.params['V']
             elif self.init=='rand':
                 U_est = orthog(npr.randn(X.shape[1],self.n_components))
                 V_est=U_est.T
             else:
-                raise Exception("Invalid initialization: options are 'pca' or 'rand' ")
+                raise Exception("Invalid initialization: options are 'pca' or 'varimax' or 'rand' ")
         else:
             if self.init is None or self.init=='rrr':
                 U_est=np.copy(U_est_rrr)
@@ -563,7 +580,8 @@ class SCA(object):
             before_train = my_loss(y_pred, Y_torch, latent, self.lam_sparse, sample_weight_torch)
         else:
             before_train = my_loss_norm(y_pred, Y_torch, latent, model.fc2.weight, self.lam_sparse, self.lam_orthog, sample_weight_torch)
-
+        print(before_train.detach().numpy())
+        print(np.sum(np.abs(latent.detach().numpy())))
         #Fit the model!
 
         # t1=time.time()
