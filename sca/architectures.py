@@ -134,3 +134,66 @@ class LowRNorm(nn.Module):
         hidden = self.fc1(x)
         output = self.fc2(hidden)
         return hidden, output
+
+
+
+
+class LowRNormNonlin(nn.Module):
+    """
+    Class for SCA (with unit norm, but not orthogonal) model in pytorch
+    """
+
+    def __init__(self, input_size, output_size, hidden_size):
+
+        """
+        Function that declares the model
+
+        Parameters
+        ----------
+        input_size: number of input neurons
+            scalar
+        output_size: number of output neurons
+            scalar
+        hidden_size: number of dimensions in low-D representation
+            scalar
+        """
+
+
+        super(LowRNormNonlin, self).__init__()
+        self.input_size = input_size
+        self.output_size = output_size
+        self.hidden_size  = hidden_size
+        if hidden_size<input_size/2:
+            self.mid_size=int(self.input_size/2)
+        else:
+            self.mid_size= input_size
+        self.fc0 = nn.Linear(self.input_size, self.mid_size, bias=True)
+        self.fc1 = nn.Linear(self.mid_size, self.hidden_size, bias=True)
+
+        self.fc2 = P.register_parametrization(nn.Linear(self.hidden_size, self.mid_size), "weight", Sphere(dim=0))
+        self.fc3 = P.register_parametrization(nn.Linear(self.mid_size, self.output_size), "weight", Sphere(dim=0))
+
+
+    def forward(self, x):
+        """
+        Function that makes predictions in the model
+
+        Parameters
+        ----------
+        x: input data
+            2d torch tensor of shape [n_time,input_size]
+
+        Returns
+        -------
+        hidden: the low-dimensional representations, of size [n_time, hidden_size]
+        output: the predictions, of size [n_time, output_size]
+        """
+        x = self.fc0(x)
+        x = torch.tanh(x)
+        hidden = self.fc1(x)
+
+        linear_output= self.fc2(hidden)
+        temp = torch.tanh(linear_output)
+        output= self.fc3(temp)
+
+        return hidden, output
