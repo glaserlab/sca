@@ -827,10 +827,10 @@ class SCANonlinear(object):
             else:
                 if Y is None:
                     pca_recon=X@U_est_pca@V_est_pca
-                    self.lam_orthog = .1*np.sum((X-pca_recon)**2)/np.sum(self.n_components*(self.n_components-1)*.01)
+                    self.lam_orthog = 1*np.sum((X-pca_recon)**2)/np.sum(self.n_components*(self.n_components-1)*.01)
                 else:
                     rrr_recon=X@U_est_rrr@V_est_rrr
-                    self.lam_orthog = .1*np.sum((Y-rrr_recon)**2)/np.sum(self.n_components*(self.n_components-1)*.01)
+                    self.lam_orthog = 1*np.sum((Y-rrr_recon)**2)/np.sum(self.n_components*(self.n_components-1)*.01)
             print('Using lam_orthog= ', self.lam_orthog)
 
         #To make the rest generic, we will predict Y from X, where Y=X in the scenario that Y has not been input
