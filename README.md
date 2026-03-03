@@ -1,4 +1,4 @@
-# Sparse Component Analysis: An unsupervised method for recovering interpretable latent factors
+# Sparse Component Analysis
 ![SCA_overview_v1.pdf](https://github.com/andrewZimnik/sca/files/14455291/SCA_overview_v1.pdf)
 
 ## Overview
@@ -26,7 +26,16 @@ latent = sca.fit_transform(X)
 ```
 
 Please see the example jupyter notebook **`Example_1pop.ipynb`** in the notebooks folder for further details on a simulated dataset. <br>
-Also see the example notebooks **`centerOutReaching.ipnyb`**, and **`unimanualCycling.ipynb`**  for examples using neural data from our manuscript. <br><br>
+Also see the example notebooks **`centerOutReaching.ipnyb`**, and **`unimanualCycling.ipynb`**  for examples using neural data from our manuscript. <br>
+
+Our updated manuscript also includes a nonlinear extension, which can be used as follows: 
+```python
+from sca.models import SCANonlinear
+sca_nl = SCANonlinear(n_components=K)
+latent_nl = sca_nl.fit_transform(X)
+```
+
+The **`unimanualCycling.ipynb`** notebook also shows the nonlinear extension, along with a PCA+Varimax approximation to SCA.<br><br>
 
 ## SCA in a nutshell
 Many neural computations are composed of multiple, distinct processes, each associated with different sets of latent factors. 
@@ -40,7 +49,7 @@ This is how SCA works; it looks for temporally sparse factors that evolve in ort
 ### Hyperparameters
 SCA has three hyperparameters. Results are generally robust to values of these hyperparameters (see preprint, including Extended Data Fig. 4). Here's what you can expect from changing each of the hyperparameters, and our general recommendations.
 
-  1. lam_sparse: determines how much to penalize non-sparse factors. While our default value generally works well, we have found that setting lam_sparse as high as possible, without sacrificing reconstruction error, generally led to slightly improved qualitative results (relative to the default). See our example notebook **`Example_sparsity_hyperparm.ipynb`**, for a demonstration of how to do this selection. 
+  1. lam_sparse: determines how much to penalize non-sparse factors. While our default value generally works well, we have found that setting lam_sparse as high as possible, without sacrificing reconstruction error, generally led to slightly improved qualitative results (relative to the default). See our example notebook **`Example_sparsity_hyperparam.ipynb`**, for a demonstration of how to do this selection. 
 
   2. lam_orthog: determines how much non-orthogonal dimensions are penalized (higher values leads to greater orthogonality). We recommend using the default value, which was used for all datasets in our preprint. Additionally, we do have an option for using a strict orthogonality constraint rather than the penalty, but n general, allowing SCA dimensions to be orthogonal-ish (rather than requiring them to be strictly orthogonal) led to slightly cleaner (and faster) results.   
 
