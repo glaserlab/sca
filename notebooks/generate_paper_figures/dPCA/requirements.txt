@@ -1,0 +1,5 @@
+numpy
+scipy
+numexpr
+scikit-learn
+numba
