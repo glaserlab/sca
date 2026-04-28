@@ -5,19 +5,13 @@
 function getOrthSubspaces_reaching()
 
 % add the directory containing Gamal's code to the current path
-addpath('/Users/sherryan/glaserlab/sca_analysis_parent/sca_analysis/gamal/');
-% % 
-% % where can we find the monkeys' data?
-% load_folder = '/Users/sherryan/glaserlab/sca_analysis_parent/sca_analysis/';
-% 
-% % where do we want to save the loadings and projections?
-% save_folder = '/Users/sherryan/glaserlab/sca_analysis_parent/sca_analysis/';
+addpath('/Users/sherryan/sca/notebooks/generate_paper_figures/gamal/');
 
 % where can we find the monkeys' data?
-load_folder = '/Users/sherryan/glaserlab/sca_analysis_parent/sca_analysis/bootstraps/';
+load_folder = '/Users/sherryan/sca/datasets/';
 
 % where do we want to save the loadings and projections?
-save_folder = '/Users/sherryan/glaserlab/sca_analysis_parent/sca_analysis/bootstraps/';
+save_folder = '/Users/sherryan/sca/datasets/';
 
 
 %% IMPORTANT TIME POINTS
@@ -34,7 +28,6 @@ prepWindow = [32:67 165:190];
 % moveWindow = [72:102 195:225];
 % postWindow = 132:162;
 mixWindow = [72:162 195:225];
-% mixWindow = [72:102 132:162 195:225];
 
 %% number of dimensions to find
 % note that this is per-epoch
@@ -43,13 +36,13 @@ numDims = 12;
 %% Balboa first
 
 % define monkey name
-% monkName = 'Balboa';
-monkName = 'Alex';
+monkName = 'Balboa';
+% monkName = 'Alex';
 
 % load data
 % 'data' are trial-averaged, filtered firing rates (C x N x T) 
 % load([load_folder monkName '_proc_neural_data.mat']);
-load([load_folder monkName '_bootstraps_100_dim8.mat']);
+load([load_folder monkName '_bootstraps_100_scapca.mat']);
 
 %% 
 
@@ -149,11 +142,11 @@ for i = 1:size(bs_neuron_proc_activity, 3)
 
 end
 
-save([save_folder monkName '_bs_100_MIX2_gamalLoadings.mat'],'prepDims_list','mixDims_list',...
+save([save_folder monkName '_bootstraps_100_MIX2_gamalLoadings.mat'],'prepDims_list','mixDims_list',...
     'prepProj_list','mixProj_list','prepWindow','mixWindow');
 % save([save_folder monkName '_MIX2_gamalLoadings.mat'],'prepDims_list','mixDims_list',...
 %     'prepProj_list','mixProj_list','prepWindow','mixWindow');
-% save([save_folder monkName '_bs_100_gamalLoadings.mat'],'prepDims_list','moveDims_list','postDims_list',...
+% save([save_folder monkName '_bootstraps_100_gamalLoadings.mat'],'prepDims_list','moveDims_list','postDims_list',...
 %     'prepProj_list','moveProj_list','postProj_list','prepWindow','moveWindow','postWindow');
 % save([save_folder monkName '_gamalLoadings.mat'],'prepDims_list','moveDims_list','postDims_list',...
 %     'prepProj_list','moveProj_list','postProj_list','prepWindow','moveWindow','postWindow');
