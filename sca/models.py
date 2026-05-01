@@ -394,6 +394,14 @@ class SCA(object):
         string
         For single population, can be 'pca', 'varimax', or 'rand', and defaults to 'pca'.
         For two-population, can be 'rrr' or 'rand', and defaults to 'rrr'
+    lam_sparse_ratio: alternative way to set sparsity penalty weight (optional)
+        scalar
+        Only applies if lam_sparse is not provided directly.
+        Allows changing the lam_sparse default value from a proportion of 10% (.1) of the reconstruction error to a different proportion.
+    lam_orthog_ratio: alternative way to set penalty weight for deviation from orthogonality (optional)
+        scalar
+        Only applies if lam_orthog is not provided directly.
+        Allows changing the lam_orthog default value from a proportion of 10% (.1) of the PCA/RRR squared error to a different proportion.
 
 
         Attributes
@@ -422,16 +430,30 @@ class SCA(object):
     """
 
 
-    def __init__(self,n_components=None,lam_sparse=None,lr=None,n_epochs=3000,orth=False,lam_orthog=None,init=None,scheduler_params_input=dict()):
+    def __init__(
+        self,
+        n_components=None,
+        lam_sparse=None,
+        lr=None,
+        n_epochs=3000,
+        orth=False,
+        lam_orthog=None,
+        init=None,
+        scheduler_params_input=dict(),
+        lam_sparse_ratio=.1,
+        lam_orthog_ratio=.1,
+    ):
 
-         self.n_components = n_components
-         self.lam_sparse=lam_sparse
-         self.lam_orthog=lam_orthog
-         self.lr=lr
-         self.n_epochs=n_epochs
-         self.orth=orth
-         self.init=init
-         self.scheduler_params_input=scheduler_params_input
+        self.n_components = n_components
+        self.lam_sparse=lam_sparse
+        self.lam_orthog=lam_orthog
+        self.lr=lr
+        self.n_epochs=n_epochs
+        self.orth=orth
+        self.init=init
+        self.scheduler_params_input=scheduler_params_input
+        self.lam_sparse_ratio=lam_sparse_ratio
+        self.lam_orthog_ratio=lam_orthog_ratio
 
 
     def fit_transform(self,X,Y=None,sample_weight=None):
@@ -526,12 +548,12 @@ class SCA(object):
             if Y is None:
                 pca_latent = X@U_est_pca
                 pca_recon=pca_latent@V_est_pca
-                self.lam_sparse = .1*np.sum((X-pca_recon)**2)/np.sum(np.abs(pca_latent))
+                self.lam_sparse = self.lam_sparse_ratio*np.sum((X-pca_recon)**2)/np.sum(np.abs(pca_latent))
                 print('Using lam_sparse= ', self.lam_sparse)
             else:
                 rrr_latent = X@U_est_rrr
                 rrr_recon=rrr_latent@V_est_rrr
-                self.lam_sparse = .1*np.sum((Y-rrr_recon)**2)/np.sum(np.abs(rrr_latent))
+                self.lam_sparse = self.lam_sparse_ratio*np.sum((Y-rrr_recon)**2)/np.sum(np.abs(rrr_latent))
                 print('Using lam_sparse= ', self.lam_sparse)
 
         #Set default lam_orthog:
@@ -543,10 +565,10 @@ class SCA(object):
                 else:
                     if Y is None:
                         pca_recon=X@U_est@V_est
-                        self.lam_orthog = .1*np.sum((X-pca_recon)**2)/np.sum(self.n_components*(self.n_components-1)*.01)
+                        self.lam_orthog = self.lam_orthog_ratio*np.sum((X-pca_recon)**2)/np.sum(self.n_components*(self.n_components-1)*.01)
                     else:
                         rrr_recon=X@U_est@V_est
-                        self.lam_orthog = .1*np.sum((Y-rrr_recon)**2)/np.sum(self.n_components*(self.n_components-1)*.01)
+                        self.lam_orthog = self.lam_orthog_ratio*np.sum((Y-rrr_recon)**2)/np.sum(self.n_components*(self.n_components-1)*.01)
                 print('Using lam_orthog= ', self.lam_orthog)
 
         #To make the rest generic, we will predict Y from X, where Y=X in the scenario that Y has not been input
@@ -728,6 +750,14 @@ class SCANonlinear(object):
     lam_orthog: penalty weight for V matrix deviating from orthogonality, to be used if orth=False (optional)
         scalar
         Will default in model fitting so that the orthogonality penalty would be 10% of the PCA/RRR squared error if all off-diag values of V.T@V were 0.1
+    lam_sparse_ratio: alternative way to set sparsity penalty weight (optional)
+        scalar
+        Only applies if lam_sparse is not provided directly.
+        Allows changing the lam_sparse default value from a proportion of 10% (.1) of the reconstruction error to a different proportion.
+    lam_orthog_ratio: alternative way to set penalty weight for deviation from orthogonality (optional)
+        scalar
+        Only applies if lam_orthog is not provided directly.
+        Allows changing the lam_orthog default value from a proportion of 100% (1.0) of the PCA/RRR squared error to a different proportion.
 
 
         Attributes
@@ -744,14 +774,26 @@ class SCANonlinear(object):
     """
 
 
-    def __init__(self,n_components=None,lam_sparse=None,lr=.001,n_epochs=5000,lam_orthog=None,scheduler_params_input=dict()):
+    def __init__(
+        self,
+        n_components=None,
+        lam_sparse=None,
+        lr=.001,
+        n_epochs=5000,
+        lam_orthog=None,
+        scheduler_params_input=dict(),
+        lam_sparse_ratio=.1,
+        lam_orthog_ratio=1,
+    ):
 
-         self.n_components = n_components
-         self.lam_sparse=lam_sparse
-         self.lam_orthog=lam_orthog
-         self.lr=lr
-         self.n_epochs=n_epochs
-         self.scheduler_params_input=scheduler_params_input
+        self.n_components = n_components
+        self.lam_sparse=lam_sparse
+        self.lam_orthog=lam_orthog
+        self.lr=lr
+        self.n_epochs=n_epochs
+        self.scheduler_params_input=scheduler_params_input
+        self.lam_sparse_ratio=lam_sparse_ratio
+        self.lam_orthog_ratio=lam_orthog_ratio
 
 
     def fit_transform(self,X,Y=None,sample_weight=None):
@@ -811,26 +853,26 @@ class SCANonlinear(object):
             if Y is None:
                 pca_latent = X@U_est_pca
                 pca_recon=pca_latent@V_est_pca
-                self.lam_sparse = .1*np.sum((X-pca_recon)**2)/np.sum(np.abs(pca_latent))
+                self.lam_sparse = self.lam_sparse_ratio*np.sum((X-pca_recon)**2)/np.sum(np.abs(pca_latent))
                 print('Using lam_sparse= ', self.lam_sparse)
             else:
                 rrr_latent = X@U_est_rrr
                 rrr_recon=rrr_latent@V_est_rrr
-                self.lam_sparse = .1*np.sum((Y-rrr_recon)**2)/np.sum(np.abs(rrr_latent))
+                self.lam_sparse = self.lam_sparse_ratio*np.sum((Y-rrr_recon)**2)/np.sum(np.abs(rrr_latent))
                 print('Using lam_sparse= ', self.lam_sparse)
 
         #Set default lam_orthog:
-        #It is set so that the orthogonality penalty would be 10% of the PCA/RRR squared error if all off-diag values of V.T@V were 0.1
+        #It is set so that the orthogonality penalty would be 100% of the PCA/RRR squared error if all off-diag values of V.T@V were 0.1
         if self.lam_orthog is None:
             if self.n_components==1:
                 self.lam_orthog=0
             else:
                 if Y is None:
                     pca_recon=X@U_est_pca@V_est_pca
-                    self.lam_orthog = 1*np.sum((X-pca_recon)**2)/np.sum(self.n_components*(self.n_components-1)*.01)
+                    self.lam_orthog = self.lam_orthog_ratio*np.sum((X-pca_recon)**2)/np.sum(self.n_components*(self.n_components-1)*.01)
                 else:
                     rrr_recon=X@U_est_rrr@V_est_rrr
-                    self.lam_orthog = 1*np.sum((Y-rrr_recon)**2)/np.sum(self.n_components*(self.n_components-1)*.01)
+                    self.lam_orthog = self.lam_orthog_ratio*np.sum((Y-rrr_recon)**2)/np.sum(self.n_components*(self.n_components-1)*.01)
             print('Using lam_orthog= ', self.lam_orthog)
 
         #To make the rest generic, we will predict Y from X, where Y=X in the scenario that Y has not been input
