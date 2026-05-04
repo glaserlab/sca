@@ -127,10 +127,10 @@ copying the procedure used in Elsayed et al. (2016)
 def calculateChanceAI(X,numDims,numReps = 1000):
 
     # calculate covariance of data
-    C = np.cov(X.T)
+    C = np.cov(X.T)+ 1e-10 * np.eye(X.shape[1])
 
     # calculate the right eigenvectors and eigenvalues of covariance matrix
-    W,U = np.linalg.eig(C)
+    W,U = np.linalg.eigh(C)
 
     # make our eigenvalues a matrix
     W = np.diag(W)
