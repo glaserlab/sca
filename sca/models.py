@@ -639,7 +639,7 @@ class SCA(object):
         self.params['V']=model.fc2.weight.detach().cpu().numpy().T
         self.params['b_v']=model.fc2.bias.detach().cpu().numpy()
 
-        self.r2_score=r2_score(Y,y_pred.detach().cpu().numpy(),sample_weight=sample_weight,multioutput='variance_weighted')
+        self.r2_score=r2_score(Y,y_pred.detach().cpu().numpy(),sample_weight=sample_weight.flatten(),multioutput='variance_weighted')
         self.reconstruction_loss=np.sum((sample_weight*(y_pred.detach().cpu().numpy() - Y))**2)
 
         #Explained squared activity
@@ -926,7 +926,7 @@ class SCANonlinear(object):
         self.model=model
         self.losses=losses
 
-        self.r2_score=r2_score(Y,y_pred.detach().cpu().numpy(),sample_weight=sample_weight,multioutput='variance_weighted')
+        self.r2_score=r2_score(Y,y_pred.detach().cpu().numpy(),sample_weight=sample_weight.flatten(),multioutput='variance_weighted')
         self.reconstruction_loss=np.sum((sample_weight*(y_pred.detach().cpu().numpy() - Y))**2)
 
 
