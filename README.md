@@ -62,3 +62,10 @@ We highly recommend reading the "Responsible Use of SCA" subsection of Methods w
 - If one is concerned about false positives, particularly due to noisy or limited data, we recommend confirming the found factors on held-out data. Held-out data can take many forms, including held-out neurons, trials, or conditions. Within the code, this means transforming held-out data into the latent space from a previously trained SCA model
 - In terms of conceptual interpretations, initial interpretations should not be fully accepted until follow-up experiments are used to test them (as with any unsupervised method)
 - Users should be particularly careful with interpretations when hyperparameters are out of their default range (if orthogonality is turned off, or if sparsity is greatly increased so that reconstruction performance substantially decreases).
+
+
+## Manuscript reproducibility
+We provide code and data to reproduce many of the main figures of the paper
+- Code is within notebooks/generate_paper_figures
+- Data files can be found [here](https://www.dropbox.com/scl/fo/meazjqc3133vsfpqdfth4/AHlX5fCRVZbKyYVJiEtwDs8?rlkey=mcqzr2ak6e6dno3iaw2pcyi8w&dl=0
+) (note some are too large to be directly uploaded to Github, so only the datasets for our example notebooks are in the datasets folder).
