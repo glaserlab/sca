@@ -27,6 +27,7 @@ latent = sca.fit_transform(X)
 
 Please see the example jupyter notebook **`Example_1pop.ipynb`** in the notebooks folder for further details on a simulated dataset. <br>
 Also see the example notebooks **`centerOutReaching.ipnyb`**, and **`unimanualCycling.ipynb`**  for examples using neural data from our manuscript. <br>
+**`Example_sorting_rules.ipynb`** also demonstrates options for how to sort dimensions to facilitate viewing. <br>
 
 The nonlinear extension of SCA can be used as follows: 
 ```python
