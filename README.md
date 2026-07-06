@@ -28,21 +28,21 @@ latent = sca.fit_transform(X)
 Please see the example jupyter notebook **`Example_1pop.ipynb`** in the notebooks folder for further details on a simulated dataset. <br>
 Also see the example notebooks **`centerOutReaching.ipnyb`**, and **`unimanualCycling.ipynb`**  for examples using neural data from our manuscript. <br>
 
-Our updated manuscript also includes a nonlinear extension, which can be used as follows: 
+The nonlinear extension of SCA can be used as follows: 
 ```python
 from sca.models import SCANonlinear
 sca_nl = SCANonlinear(n_components=K)
 latent_nl = sca_nl.fit_transform(X)
 ```
 
-The **`unimanualCycling.ipynb`** notebook also shows the nonlinear extension, along with a PCA+Varimax approximation to SCA.<br><br>
+The **`unimanualCycling.ipynb`** notebook provides an example of this nonlinear extension, along with a PCA+Varimax approximation to SCA.<br><br>
 
 ## SCA in a nutshell
 Many neural computations are composed of multiple, distinct processes, each associated with different sets of latent factors. 
 
 For example, in a center-out reaching task, reach-generating computations in motor cortex are composed of [preparatory](https://elifesciences.org/articles/31826) and [execution-related](https://www.nature.com/articles/ncomms13239) processes. Preparation and execution can occur at different times, in nearly-orthogonal sets of dimensions. Preparatory and execution-related factors can therefore be recovered if we look for factors that are temporally sparse and active in orthogonal sets of dimensions. 
 
-This is how SCA works; it looks for temporally sparse factors that evolve in orthogonal dimensions (which can also reconstruct single-unit activity). Note that these assumptions are not specific to reaching. We found that the same cost function produces interpretable factors across a wide variety of tasks involving a variety of experimental models (monkeys, *C. elegans*, and artificial networks). In all cases, SCA recovered factors that reflected a single computational role. Importantly, this interpretability did not require any supervision; SCA works without needing to know anything about the task structure. 
+This is how SCA works; it looks for temporally sparse factors that evolve in orthogonal dimensions (which can also reconstruct single-unit activity). Note that these assumptions are not specific to reaching. We found that the same cost function produces factors reflecting distinct computations across a wide variety of tasks involving a variety of experimental models (monkeys, *C. elegans*, and artificial networks). In all cases, SCA recovered factors that reflected a single computational role. Importantly, this interpretability did not require any supervision; SCA works without needing to know anything about the task structure. 
 
 
 ## Usage notes
