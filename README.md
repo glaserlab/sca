@@ -35,7 +35,7 @@ sca_nl = SCANonlinear(n_components=K)
 latent_nl = sca_nl.fit_transform(X)
 ```
 
-The **`unimanualCycling.ipynb`** notebook provides an example of this nonlinear extension, along with a PCA+Varimax approximation to SCA.<br><br>
+The **`unimanualCycling.ipynb`** notebook provides an example of this nonlinear extension, along with a PCA+Varimax approximation to linear SCA.<br><br>
 
 ## SCA in a nutshell
 Many neural computations are composed of multiple, distinct processes, each associated with different sets of latent factors. 
